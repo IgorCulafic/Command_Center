@@ -1,23 +1,27 @@
 import { useState } from "react"
+import { Popover as PopoverPrimitive } from "radix-ui"
 import { EmojiPicker } from "frimousse"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
 
 interface IconPickerProps {
   value: string
   onChange: (icon: string) => void
 }
 
-/** Searchable emoji picker (works by tap on phone). */
+/**
+ * Searchable emoji picker (works by tap on phone).
+ *
+ * Note: we use the Radix Popover primitives **without a Portal** on purpose. When
+ * this lives inside a modal Dialog (the space dialog), a portaled popover lands
+ * outside the dialog's DOM, and the Dialog's scroll-lock then blocks touch/wheel
+ * scrolling inside it. Rendering inline keeps the emoji list within the dialog's
+ * allowed scroll area, so it scrolls on mobile.
+ */
 export function IconPicker({ value, onChange }: IconPickerProps) {
   const [open, setOpen] = useState(false)
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+    <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
+      <PopoverPrimitive.Trigger asChild>
         <button
           type="button"
           aria-label="Choose icon"
@@ -25,8 +29,12 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
         >
           {value || "📁"}
         </button>
-      </PopoverTrigger>
-      <PopoverContent align="start" className="w-fit p-0">
+      </PopoverPrimitive.Trigger>
+      <PopoverPrimitive.Content
+        align="start"
+        sideOffset={4}
+        className="z-50 w-fit overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md outline-hidden"
+      >
         <EmojiPicker.Root
           onEmojiSelect={(emoji) => {
             onChange(emoji.emoji)
@@ -52,7 +60,9 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
               </button>
             )}
           </div>
-          <EmojiPicker.Viewport className="relative flex-1 outline-hidden">
+          <EmojiPicker.Viewport
+            className="relative flex-1 overscroll-contain outline-hidden [touch-action:pan-y]"
+          >
             <EmojiPicker.Loading className="absolute inset-0 grid place-items-center text-sm text-muted-foreground">
               Loading…
             </EmojiPicker.Loading>
@@ -88,7 +98,7 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
             />
           </EmojiPicker.Viewport>
         </EmojiPicker.Root>
-      </PopoverContent>
-    </Popover>
+      </PopoverPrimitive.Content>
+    </PopoverPrimitive.Root>
   )
 }
